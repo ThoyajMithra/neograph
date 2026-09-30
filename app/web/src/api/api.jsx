@@ -1,5 +1,5 @@
 export async function askBackend(question, docs) {
-  const res = await fetch('/api/chat', {
+  const res = await fetch('/api/query', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question, docs }),
