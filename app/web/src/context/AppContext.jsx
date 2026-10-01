@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { askBackend,fetchDocs } from '../api/api';
+import { askBackend,fetchDocs,uploadDocuments  } from '../api/api';
 
 const AppContext = createContext();
 
@@ -10,6 +10,7 @@ export function AppProvider({ children }) {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchDocs().then(setDocs).catch((e) => setError(e.message));
@@ -37,11 +38,25 @@ export function AppProvider({ children }) {
       setLoading(false);
     }
   };
+
+  const uploadFiles = async (files) => {
+    if (!files.length) return;
+    setUploading(true);
+    try {
+      const data = await uploadDocuments(files);
+      setDocs((prev) => [...prev, ...data.files]);
+    } catch (err) {
+      console.error(err);
+      alert('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
     
 
   return (
     <AppContext.Provider
-      value={{ docs, selectedDocs, messages , toggleDoc,setMessages , sendMessage }}
+      value={{ docs, selectedDocs, messages , toggleDoc,setMessages , sendMessage,uploadFiles, uploading }}
     >
       {children}
     </AppContext.Provider>

@@ -47,6 +47,31 @@ html, body, #root { height: 100%; margin: 0; }
 .row:hover { background: #2a2d2e; }
 .row input { accent-color: var(--accent); }
 
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.upload {
+  margin: 8px;
+  height: 32px;
+  background: #2f2f2f;
+  color: #ccc;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.upload:hover:not(:disabled) {
+  background: #3a3a3a;
+}
+
 /* Graph */
 .graph {
   flex: 1;
@@ -91,6 +116,7 @@ html, body, #root { height: 100%; margin: 0; }
   color: var(--text);
   border: 1px solid transparent;
   border-radius: 2px;
+  align-items: center;
   outline: none;
 }
 .chat input:focus { border-color: var(--accent); }

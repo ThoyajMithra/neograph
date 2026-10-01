@@ -13,3 +13,17 @@ export async function fetchDocs() {
   if (!res.ok) throw new Error(`Server error ${res.status}`);
   return res.json(); // ["pdf1.pdf", ...]
 }
+
+export async function uploadDocuments(files) {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('files', file));
+
+  // Don't set Content-Type manually, the browser adds the multipart boundary
+  const res = await fetch(`api/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!res.ok) throw new Error('Upload failed');
+  return res.json(); // e.g. { files: [{ id, name }] }
+}

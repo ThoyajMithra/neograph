@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 
 
@@ -6,13 +6,15 @@ export default function Chat() {
   const { messages,selectedDocs,setMessages,sendMessage } = useApp();
   const [text, setText] = useState('');
   const [height, setHeight] = useState(200);
+  const fileRef = useRef(null);
+  
 
   const send = () => {
     if (!text.trim()) return;
-    // setMessages([...messages, {"*":text}]);
     sendMessage(text);
     setText('');
   };
+
 
   const startResize = (e) => {
     e.preventDefault();
@@ -41,6 +43,7 @@ export default function Chat() {
           </div>
         ))}
       </div>
+      
       <input
         value={text}
         placeholder="Question..."

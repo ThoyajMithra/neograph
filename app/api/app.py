@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import query
+from app.api.api.routes import docs
+from app.api.api.routes import query
 
 
 app = FastAPI(
@@ -19,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(query.router)
+app.include_router(docs.router)
 
 
 @app.get("/")

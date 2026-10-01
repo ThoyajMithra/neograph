@@ -13,7 +13,7 @@ export default function AppLayout() {
         <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
         <Graph />
       </div>
-      <Chat pendingMention={pendingMention} setPendingMention={setPendingMention} />
+        <Chat pendingMention={pendingMention} setPendingMention={setPendingMention} />
     </div>
   );
 }
