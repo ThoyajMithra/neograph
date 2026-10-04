@@ -43,7 +43,8 @@ export function AppProvider({ children }) {
     if (!files.length) return;
     setUploading(true);
     try {
-      await uploadDocuments(files);
+      const res=await uploadDocuments(files);
+      console.log(res)
       const names = await fetchDocs();
       setDocs(names)
     } catch (err) {

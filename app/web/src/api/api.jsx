@@ -25,5 +25,5 @@ export async function uploadDocuments(files) {
   });
 
   if (!res.ok) throw new Error('Upload failed');
-  return res.json(); // e.g. { files: [{ id, name }] }
+  return res.json(); // e.g. { files: [{ id, name,status }] }
 }

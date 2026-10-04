@@ -6,8 +6,19 @@ export default function Sidebar({ collapsed, setCollapsed }) {
   const fileRef = useRef(null);
 
   const handleFiles = async (e) => {
+    // const files = Array.from(e.target.files);
+    // console.log("Selected files:");
+    
+    // files.forEach((file) => {
+    //   console.log({
+    //     name: file.name,
+    //     type: file.type,
+    //     size: file.size,
+    //   });
+    // });
     await uploadFiles(Array.from(e.target.files));
     e.target.value = '';
+    
   };
 
   return (

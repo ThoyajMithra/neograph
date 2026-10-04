@@ -11,11 +11,15 @@ class DocumentOut(BaseModel):
     char_count: int
 
 
-class DocumentFull(BaseModel):
-    id: UUID
-    name: str
+class DocumentFull(DocumentOut):
     content: str
-    checksum: str
-    created_at: datetime
+
+
+class ChunkOut(BaseModel):
+    id: UUID
+    document_id: UUID
+    idx: int
+    heading: str | None = None
+    text: str
 
 
