@@ -1,80 +1,27 @@
-import re
-
-HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
-
-import re
+import asyncio
 
 
-def _split_pieces(text: str, limit: int) -> list[str]:
-    pieces = []
-    for para in re.split(r"\n\s*\n", text):      # blank line = new paragraph
-        para = para.strip()
-        if not para:
-            continue
-        if len(para) <= limit:
-            pieces.append(para)
-            continue
-        for sent in re.split(r"(?<=[.!?])\s+", para):
-            sent = sent.strip()
-            while len(sent) > limit:              # a monster sentence: hard cut
-                pieces.append(sent[:limit])
-                sent = sent[limit:]
-            if sent:
-                pieces.append(sent)
-    return pieces
+class EmbeddingEncoder:
+    """Turns text into 384 numbers. Local model, no API key. Not wired in yet."""
 
+    def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5"):
+        self.model_name = model_name
+        self._model = None
 
-def chunk_text(text: str, max_chars: int = 1000, overlap: int = 150) -> list[str]:
-    pieces = _split_pieces(text, max_chars - overlap)
-    chunks: list[str] = []
-    current = ""
+    def _load(self):
+        if self._model is None:
+            from fastembed import TextEmbedding   # pip install fastembed (later)
+            self._model = TextEmbedding(self.model_name)
+        return self._model
 
-    for piece in pieces:
-        if current and len(current) + 2 + len(piece) > max_chars:
-            chunks.append(current)
-            tail = current[-overlap:] if overlap else ""
-            if " " in tail:
-                tail = tail.split(" ", 1)[1]      # don't start mid-word
-            current = f"{tail} {piece}".strip()
-        else:
-            current = f"{current}\n\n{piece}" if current else piece
+    def _embed_passages(self, texts: list[str]) -> list[list[float]]:
+        return [[float(x) for x in v] for v in self._load().passage_embed(texts)]
 
-    if current:
-        chunks.append(current)
-    return chunks
+    def _embed_query(self, query: str) -> list[float]:
+        return [float(x) for x in next(iter(self._load().query_embed(query)))]
 
-def split_sections(text: str) -> list[tuple[str | None, str]]:
-    sections = []
-    stack: list[tuple[int, str]] = []
-    body: list[str] = []
-    in_code = False
+    async def embed_passages(self, texts: list[str]) -> list[list[float]]:
+        return await asyncio.to_thread(self._embed_passages, texts)
 
-    def flush():
-        body_text = "\n".join(body).strip()
-        if body_text:
-            path = " > ".join(title for _, title in stack) or None
-            sections.append((path, body_text))
-        body.clear()
-
-    for line in text.splitlines():
-        if line.strip().startswith("```"):
-            in_code = not in_code
-        m = None if in_code else HEADING.match(line)
-        if m:
-            flush()
-            level = len(m.group(1))
-            while stack and stack[-1][0] >= level:
-                stack.pop()
-            stack.append((level, m.group(2)))
-        else:
-            body.append(line)
-    flush()
-    return sections
-
-
-def chunk_document(text: str, max_chars: int = 1000, overlap: int = 150) -> list[tuple[str | None, str]]:
-    result = []
-    for heading, body in split_sections(text):
-        for piece in chunk_text(body, max_chars, overlap):
-            result.append((heading, piece))
-    return result
+    async def embed_query(self, query: str) -> list[float]:
+        return await asyncio.to_thread(self._embed_query, query)

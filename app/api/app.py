@@ -2,17 +2,17 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.api.routes import docs
+from app.api.api.routes import documents
 from app.api.api.routes import query
 
-from storage.postgres.database import create_pool,init_db
+from storage.database import create_pool,init_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.pool = create_pool()
-    init_db(app.state.pool)
+    app.state.pool = await create_pool()
+    await init_db(app.state.pool)
     yield
-    app.state.pool.close()
+    await app.state.pool.close()
 
 app = FastAPI(
     title="neograph",
@@ -29,8 +29,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(documents.router)
 app.include_router(query.router)
-app.include_router(docs.router)
 
 
 @app.get("/")

@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE TABLE IF NOT EXISTS chunks (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    idx         INTEGER NOT NULL,      -- position in the document: 0, 1, 2...
-    heading     TEXT,                  -- e.g. "Project X > Budget"
+    idx         INTEGER NOT NULL,
+    heading     TEXT,
     text        TEXT NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     embedding   VECTOR(384)
