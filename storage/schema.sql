@@ -20,3 +20,14 @@ CREATE TABLE IF NOT EXISTS chunks (
 
 CREATE INDEX IF NOT EXISTS chunks_document_id_idx ON chunks (document_id);
 CREATE INDEX IF NOT EXISTS chunks_embedding_idx ON chunks USING hnsw (embedding vector_cosine_ops);
+
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    question   TEXT NOT NULL,
+    answer     TEXT NOT NULL,
+    sources    JSONB,
+    confidence DOUBLE PRECISION,
+    latency_ms DOUBLE PRECISION,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
