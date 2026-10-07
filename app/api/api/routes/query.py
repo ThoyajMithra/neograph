@@ -21,6 +21,7 @@ async def query_sync(
     
     """Non-streaming query: collects all events and returns final answer."""
     answer = ""
+    final_answer = ""
     trace_id = None
     steps = []
     sources = []
@@ -38,12 +39,15 @@ async def query_sync(
         if event.get("type") == "token":
             answer += event.get("token", "")
         elif event.get("type") == "done":
+            final_answer = event.get("answer", "")
             trace_id = event.get("trace_id")
             steps = event.get("steps", [])
             sources = event.get("sources", [])
             tokens_used = event.get("tokens_used", 0)
             latency_ms = event.get("latency_ms", 0)
             confidence = event.get("confidence", 0.0)
+
+    answer = answer or final_answer          # use the done answer if no tokens came
 
     if not answer:
         raise HTTPException(status_code=404, detail="No answer generated")

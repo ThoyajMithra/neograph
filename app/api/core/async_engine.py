@@ -1,12 +1,12 @@
 from typing import AsyncGenerator
 
 class AsyncEngine:
-    def __init__(self, store, pipeline,agent):
+    def __init__(self, store ,pipeline,agent):
         self.store = store          # a PostgresStore
         self.pipeline = pipeline
         self.agent=agent
 
-    async def ingest_files(self, files: list[tuple[str, bytes]]) -> list[dict]:
+    async def ingest_files(self, files: list[tuple[str, bytes]],) -> list[dict]:
         results = []
         for filename, raw in files:      # one by one, so identical files in a batch can't race
             results.append(await self.pipeline.ingest_file(filename, raw))

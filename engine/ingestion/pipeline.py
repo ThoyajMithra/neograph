@@ -16,8 +16,9 @@ def _prepare(suffix: str, raw: bytes):
 
 
 class IngestionPipeline:
-    def __init__(self, store):
+    def __init__(self, store,encoder):
         self.store = store
+        self.encoder =encoder
 
     async def ingest_file(self, filename: str, raw: bytes) -> dict:
         name = os.path.basename(filename or "")
@@ -39,7 +40,10 @@ class IngestionPipeline:
         if existing:
             return self._result(name, "duplicate", doc_id=existing["id"])
 
-        doc = await self.store.save_document_with_chunks(name, content, checksum, chunks)
+        texts = [f"{h}\n{t}" if h else t for h, t in chunks]
+        embeddings = await asyncio.to_thread(self.encoder.encode, texts)
+
+        doc = await self.store.save_document_with_chunks(name, content, checksum, chunks,embeddings)
         return self._result(name, "saved", doc_id=doc["id"], chunks=doc["chunk_count"])
 
     @staticmethod

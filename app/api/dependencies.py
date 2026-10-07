@@ -23,15 +23,18 @@ def get_store(pool=Depends(get_pool)) -> PostgresStore:
 def get_chat_store(pool=Depends(get_pool)) -> Chat:
     return Chat(pool)
 
-def get_ingestion_pipeline(store: PostgresStore = Depends(get_store)) -> IngestionPipeline:
-    return IngestionPipeline(store=store)
-
 @lru_cache
 def get_encoder() -> EmbeddingEncoder:
     return LocalEncoder(
         model_name="baai/bge-small-en-v1.5",
         dimensionality=384,
     )
+
+def get_ingestion_pipeline(
+        store: PostgresStore = Depends(get_store),
+        encoder: EmbeddingEncoder= Depends(get_encoder)
+        ) -> IngestionPipeline:
+    return IngestionPipeline(store=store,encoder=encoder)
 
 
 @lru_cache
@@ -61,4 +64,4 @@ def get_engine(
     agent:AsyncGraphReasoner=Depends(get_agent)
 
 ) -> AsyncEngine:
-    return AsyncEngine(store=store, pipeline=pipeline,agent=agent)
+    return AsyncEngine(store=store,pipeline=pipeline,agent=agent)
