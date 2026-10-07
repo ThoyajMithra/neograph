@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+python-multipart        
+pydantic-settings
+python-dotenv
+psycopg[binary]
+psycopg-pool
+pypdf
+python-docx
+httpx
+openai

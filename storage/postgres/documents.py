@@ -33,7 +33,8 @@ class PostgresStore:
             return cur.rowcount > 0
 
     async def save_document_with_chunks(self, name: str, content: str, checksum: str,
-                                        chunks: list[tuple[str | None, str]]) -> dict:
+                                        chunks: list[tuple[str | None, str]],
+                                        embeddings: list[list[float]]) -> dict:
         """One connection = one transaction: document and chunks save together, or neither."""
         async with self.pool.connection() as conn:
             cur = await conn.execute(
@@ -45,8 +46,12 @@ class PostgresStore:
 
             async with conn.cursor() as cur:
                 await cur.executemany(
-                    "INSERT INTO chunks (document_id, idx, heading, text) VALUES (%s, %s, %s, %s)",
-                    [(doc["id"], i, h, t) for i, (h, t) in enumerate(chunks)],
+                    """INSERT INTO chunks (document_id, idx, heading, text, embedding)
+                       VALUES (%s, %s, %s, %s, %s::vector)""",
+                    [
+                        (doc["id"], i, h, t, str(emb))
+                        for i, ((h, t), emb) in enumerate(zip(chunks, embeddings))
+                    ],
                 )
             doc["chunk_count"] = len(chunks)
             return doc
@@ -59,3 +64,4 @@ class PostgresStore:
                 (doc_id,),
             )
             return await cur.fetchall()
+

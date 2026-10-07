@@ -42,7 +42,7 @@ def get_llm_client() -> AsyncOpenAI:
     )
 
 def get_agent(
-    store: PostgresStore = Depends(get_store),
+    store: Chat = Depends(get_chat_store),
     encoder: EmbeddingEncoder = Depends(get_encoder),
     client: AsyncOpenAI = Depends(get_llm_client),
 ) -> AsyncGraphReasoner:

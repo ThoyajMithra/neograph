@@ -3,6 +3,7 @@ import asyncio
 import time
 
 
+
 class AsyncGraphReasoner:
     def __init__(
         self,
@@ -37,6 +38,7 @@ class AsyncGraphReasoner:
         hits = await self.store.search_chunks_vector(q_vec, top_k or self.top_k)
         if confidence_threshold:
             hits = [h for h in hits if h["score"] >= confidence_threshold]
+
 
         sources = [
             {"n": i + 1, "document": h["document_name"], "heading": h["heading"],

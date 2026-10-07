@@ -18,6 +18,7 @@ async def query_sync(
     engine: AsyncEngine = Depends(get_engine),
     chat_store: Chat = Depends(get_chat_store),
 ):
+    
     """Non-streaming query: collects all events and returns final answer."""
     answer = ""
     trace_id = None
