@@ -64,26 +64,31 @@ class AsyncGraphReasoner:
             return
 
         # ---------- Step 2: build the prompt ----------
+        # CHANGED: label is just [n]
         chunk_text = "\n\n".join(
-            f"[{i + 1},{h['score']}] ({h['document_name']}"
+            f"[{i + 1}] ({h['document_name']}"
             + (f" > {h['heading']}" if h["heading"] else "")
             + f")\n{h['text']}"
             for i, h in enumerate(hits)
         )
 
         minimum = min(10, len(history))
-        hist_text = "\n".join(f"{m['role']}: {m['content']}" for m in history[-minimum:])
+        # CHANGED: .get() so missing keys don't crash
+        hist_text = "\n".join(
+            f"{m.get('role', 'user')}: {m.get('content', '')}" for m in history[-minimum:]
+        )
+        # CHANGED: lines unindented
         context = f"""=== DOCUMENT CONTEXT ===
-        {chunk_text}
+{chunk_text}
 
-        === CHAT HISTORY ===
-        {hist_text}
+=== CHAT HISTORY ===
+{hist_text}
 
-        === QUESTION ===
-        {question}
+=== QUESTION ===
+{question}
 
-        Answer using the document context. Cite passages like [1]. If the answer is not in the context, say so. Be concise.
-        """
+Answer using the document context. Cite passages like [1]. If the answer is not in the context, say so. Be concise.
+"""
 
         messages = [
             {"role": "system", "content": "You are a helpful assistant. Answer using the provided document context and conversation history."},
@@ -92,41 +97,41 @@ class AsyncGraphReasoner:
 
         # ---------- Step 3: generate (streamed) ----------
         t0 = time.time()
-        # response = await self.client.chat.completions.create(
-        #     model=self.model_name,
-        #     messages=messages,
-        #     temperature=0.3,
-        #     max_tokens=4096,
-        #     stream=True,
-        #     stream_options={"include_usage": True},
-        # )
+        response = await self.client.chat.completions.create(
+            model=self.model_name,
+            messages=messages,
+            temperature=0.3,
+            max_tokens=4096,
+            stream=True,
+            stream_options={"include_usage": True},
+        )
 
-        # answer_text = ""
-        # tokens_used = 0
-        # async for chunk in response:
-        #     if chunk.usage:
-        #         tokens_used = chunk.usage.total_tokens
-        #     if not chunk.choices:            # the final usage chunk has no choices
-        #         continue
-        #     delta = chunk.choices[0].delta.content or ""
-        #     answer_text += delta
-        #     if delta:
-        #         yield {"type": "token", "token": delta}
+        answer_text = ""
+        tokens_used = 0
+        async for chunk in response:
+            if chunk.usage:
+                tokens_used = chunk.usage.total_tokens
+            if not chunk.choices:            # the final usage chunk has no choices
+                continue
+            delta = chunk.choices[0].delta.content or ""
+            answer_text += delta
+            if delta:
+                yield {"type": "token", "token": delta}
 
-        # steps.append({
-        #     "step": 2,
-        #     "action": "synthesize_from_history",
-        #     "input": f"{len(hits)} chunks, {len(history)} history messages",
-        #     "output": answer_text[:200] + "..." if len(answer_text) > 200 else answer_text,
-        #     "latency_ms": round((time.time() - t0) * 1000, 2),
-        # })
+        steps.append({
+            "step": 2,
+            "action": "synthesize_from_history",
+            "input": f"{len(hits)} chunks, {len(history)} history messages",
+            "output": answer_text[:200] + "..." if len(answer_text) > 200 else answer_text,
+            "latency_ms": round((time.time() - t0) * 1000, 2),
+        })
         yield {"type": "step", **steps[-1]}
 
         yield {
             "type": "done",
-            "answer": chunk_text,
+            "answer": answer_text,
             "trace_id": None,
-            "tokens_used": 0,
+            "tokens_used": tokens_used,      # CHANGED: was 0
             "latency_ms": round((time.time() - start_time) * 1000, 2),
             "confidence": round(float(hits[0]["score"]), 3),   # score of the best match
             "steps": steps,
