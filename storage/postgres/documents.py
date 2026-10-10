@@ -65,3 +65,12 @@ class PostgresStore:
             )
             return await cur.fetchall()
 
+    async def get_chunk(self, chunk_id) -> dict | None:
+        async with self.pool.connection() as conn:
+            cur = await conn.execute(
+                """SELECT id, document_id, idx, heading, text
+                   FROM chunks WHERE id = %s::uuid""",
+                (chunk_id,),
+            )
+            return await cur.fetchone()
+

@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.api.routes import documents
 from app.api.api.routes import query
+from app.api.api.routes import graph
 
 from storage.database import create_pool,init_db
 
@@ -31,6 +32,7 @@ app.add_middleware(
 
 app.include_router(documents.router)
 app.include_router(query.router)
+app.include_router(graph.router)
 
 
 @app.get("/")
