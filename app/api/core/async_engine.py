@@ -5,7 +5,7 @@ from engine.models.document import ReasoningTrace
 
 
 class AsyncEngine:
-    def __init__(self, store, kg, pipeline, agent):
+    def __init__(self, store, kg,pipeline, agent):
         self.store = store          # PostgresStore
         self.kg = kg                # KnowledgeGraph 
         self.pipeline = pipeline

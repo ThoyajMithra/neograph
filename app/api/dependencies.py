@@ -15,6 +15,7 @@ from engine.ingestion.pipeline import IngestionPipeline
 from engine.embedding.encoder import LocalEncoder, EmbeddingEncoder
 from engine.agent.reasoner_async import AsyncGraphReasoner
 from engine.graph.knowledge_graph import KnowledgeGraph
+from engine.extraction.extractor import EntityExtractor
 
 
 def get_pool(request: Request):
@@ -59,6 +60,15 @@ def get_llm_client() -> AsyncOpenAI:
         base_url=os.getenv("LLM_BASE_URL") or None,
     )
 
+@lru_cache
+def get_extractor() -> EntityExtractor:
+    return EntityExtractor(
+        client=get_llm_client(),
+        model_name=os.getenv("LLM_MODEL", "deepseek-chat"),
+        use_local=os.getenv("USE_LOCAL_LLM", "false").lower() == "true",
+        encoder=get_encoder(),
+    )
+
 
 _kg_lock = asyncio.Lock()
 
@@ -92,6 +102,7 @@ def get_agent(
     store: Chat = Depends(get_chat_store),
     encoder: EmbeddingEncoder = Depends(get_encoder),
     client: AsyncOpenAI = Depends(get_llm_client),
+    kg: KnowledgeGraph = Depends(get_knowledge_graph)
 ) -> AsyncGraphReasoner:
     return AsyncGraphReasoner(
         encoder=encoder,
@@ -100,6 +111,7 @@ def get_agent(
         model_name=os.getenv("LLM_MODEL", "deepseek-chat"),
         max_trace_chunks=int(os.getenv("MAX_EVIDENCE_CHUNKS", "12")),
         top_k=int(os.getenv("TOP_K", "5")),
+        kg=kg
     )
 
 
@@ -109,4 +121,4 @@ def get_engine(
     pipeline: IngestionPipeline = Depends(get_ingestion_pipeline),
     agent: AsyncGraphReasoner = Depends(get_agent),
 ) -> AsyncEngine:
-    return AsyncEngine(store=store, kg=kg, pipeline=pipeline, agent=agent)
+    return AsyncEngine(store=store,kg=kg,pipeline=pipeline, agent=agent)
