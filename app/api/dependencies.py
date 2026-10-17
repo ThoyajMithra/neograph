@@ -46,13 +46,6 @@ def get_encoder() -> EmbeddingEncoder:
     )
 
 
-def get_ingestion_pipeline(
-    store: PostgresStore = Depends(get_store),
-    encoder: EmbeddingEncoder = Depends(get_encoder),
-) -> IngestionPipeline:
-    return IngestionPipeline(store=store, encoder=encoder)
-
-
 @lru_cache
 def get_llm_client() -> AsyncOpenAI:
     return AsyncOpenAI(
@@ -63,7 +56,7 @@ def get_llm_client() -> AsyncOpenAI:
 @lru_cache
 def get_extractor() -> EntityExtractor:
     return EntityExtractor(
-        client=get_llm_client(),
+        # client=get_llm_client(),
         model_name=os.getenv("LLM_MODEL", "deepseek-chat"),
         use_local=os.getenv("USE_LOCAL_LLM", "false").lower() == "true",
         encoder=get_encoder(),
@@ -98,17 +91,27 @@ async def get_knowledge_graph(
     return kg
 
 
+
+def get_ingestion_pipeline(
+    store: PostgresStore = Depends(get_store),
+    encoder: EmbeddingEncoder = Depends(get_encoder),
+    kg: KnowledgeGraph = Depends(get_knowledge_graph),
+    extractor: EntityExtractor = Depends(get_extractor),
+) -> IngestionPipeline:
+    return IngestionPipeline(store=store, encoder=encoder, kg=kg, extractor=extractor)
+
+
 def get_agent(
     store: Chat = Depends(get_chat_store),
     encoder: EmbeddingEncoder = Depends(get_encoder),
-    client: AsyncOpenAI = Depends(get_llm_client),
+    # client: AsyncOpenAI = Depends(get_llm_client),
     kg: KnowledgeGraph = Depends(get_knowledge_graph)
 ) -> AsyncGraphReasoner:
     return AsyncGraphReasoner(
         encoder=encoder,
         store=store,
-        client=client,
-        model_name=os.getenv("LLM_MODEL", "deepseek-chat"),
+        # client=client,
+        model_name=os.getenv("LLM_MODEL", "qwen3:4b"),
         max_trace_chunks=int(os.getenv("MAX_EVIDENCE_CHUNKS", "12")),
         top_k=int(os.getenv("TOP_K", "5")),
         kg=kg

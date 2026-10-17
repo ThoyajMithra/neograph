@@ -19,12 +19,13 @@ from engine.models.node import Node
 from engine.models.edge import Edge
 from engine.extraction.prompts import EXTRACTION_PROMPT
 from engine.extraction.schemas import ExtractionResult
+from engine.client import get_openai,get_ollama
 
 
 class EntityExtractor:
     def __init__(
         self,
-        client,                                   # AsyncOpenAI
+        # client,                                   # AsyncOpenAI
         model_name: str = "deepseek-chat",
         use_local: bool = False,
         encoder: EmbeddingEncoder | None = None,
@@ -33,7 +34,6 @@ class EntityExtractor:
         max_retries: int = 3,
         timeout: int = 120,
     ):
-        self.client = client
         self.model_name = model_name
         self.use_local = use_local
         self.encoder = encoder
@@ -41,6 +41,7 @@ class EntityExtractor:
         self.temperature = temperature
         self.max_retries = max_retries
         self.timeout = timeout
+        self.client = get_ollama() if self.use_local else get_openai()
 
         self._node_embed_cache: dict[str, np.ndarray] = {}
 

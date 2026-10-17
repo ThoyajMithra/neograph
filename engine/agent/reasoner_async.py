@@ -12,6 +12,7 @@ AsyncGraphReasoner: streaming Graph RAG agent with history-aware routing.
 import asyncio
 import time
 
+from engine.client_async import get_async_openai_client,get_async_ollama_client
 from engine.embedding.encoder import EmbeddingEncoder
 from engine.agent.promt import REASONER_SYSTEM_PROMPT, ROUTER_PROMPT
 
@@ -41,7 +42,7 @@ class AsyncGraphReasoner:
         self,
         encoder: EmbeddingEncoder,
         store,                      # chat.py (Chat)
-        client,
+        # client,
         kg=None,                    # KnowledgeGraph
         model_name: str = "qwen3.5:4b",
         use_openai: bool = False,
@@ -51,13 +52,13 @@ class AsyncGraphReasoner:
     ):
         self.encoder = encoder
         self.store = store
-        self.client = client
         self.kg = kg
         self.model_name = model_name
         self.use_openai = use_openai
         self.max_trace_chunks = max_trace_chunks
         self.max_depth = max_depth
         self.top_k = top_k
+        self.client = get_async_openai_client() if self.use_openai else get_async_ollama_client()
 
     # ------------------------------------------------------------------
     # Shared helpers
