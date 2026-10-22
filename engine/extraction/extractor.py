@@ -67,10 +67,11 @@ class EntityExtractor:
         ]
 
         last_error: Exception | None = None
+        print(messages)
 
         for attempt in range(1, self.max_retries + 1):
             try:
-                current_timeout = 600.0 if self.use_local else float(self.timeout)
+                current_timeout = 10.0 if self.use_local else float(self.timeout)
 
                 kwargs = {
                     "model": self.model_name,
@@ -93,13 +94,15 @@ class EntityExtractor:
                             "num_thread": 4,
                             "numa": False,
                             "low_vram": True,
-                            "num_ctx": 4096,
+                            "num_ctx": 2048,
                             "use_mmap": True,
                             "f16_kv": True,
                         },
                     }
-
+                print("here")
                 response = await self.client.chat.completions.create(**kwargs)
+                print(response)
+                print("done")
                 return self._extract_json(response.choices[0].message.content or "")
             except Exception as e:
                 last_error = e

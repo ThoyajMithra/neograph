@@ -57,7 +57,7 @@ def get_llm_client() -> AsyncOpenAI:
 def get_extractor() -> EntityExtractor:
     return EntityExtractor(
         # client=get_llm_client(),
-        model_name=os.getenv("LLM_MODEL", "deepseek-chat"),
+        model_name=os.getenv("LLM_MODEL", "qwen3:4b"),
         use_local=os.getenv("USE_LOCAL_LLM", "false").lower() == "true",
         encoder=get_encoder(),
     )

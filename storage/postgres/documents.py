@@ -59,8 +59,8 @@ class PostgresStore:
     async def get_chunks(self, doc_id) -> list[dict]:
         async with self.pool.connection() as conn:
             cur = await conn.execute(
-                """SELECT id, document_id, idx, heading, text
-                   FROM chunks WHERE document_id = %s ORDER BY idx""",
+                """SELECT id::text AS id, document_id::text AS document_id, idx, heading, text
+                   FROM chunks WHERE document_id = %s::uuid ORDER BY idx""",
                 (doc_id,),
             )
             return await cur.fetchall()
@@ -73,4 +73,3 @@ class PostgresStore:
                 (chunk_id,),
             )
             return await cur.fetchone()
-

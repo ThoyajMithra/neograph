@@ -22,7 +22,7 @@ def _prepare(suffix: str, raw: bytes):
 
 class IngestionPipeline:
     def __init__(self, store, encoder, kg=None, extractor=None, concurrency: int | None = None):
-        self.store = store
+        self.store = store  #document.py
         self.encoder = encoder
         self.kg = kg
         self.extractor = extractor
@@ -55,10 +55,17 @@ class IngestionPipeline:
 
         # NEW: graph step. The document is already saved, so a failure here loses nothing.
         graph = {"entities": 0, "relations": 0}
-        if self.kg is not None and self.extractor is not None:
+        if self.kg is None or self.extractor is  None:
+            print("skipped graph making")
+            if self.kg is None:
+                print("its kg")
+            else:
+                print("its extrator")
+        else:
             try:
                 async with _graph_lock:
                     graph = await self._build_graph(doc["id"])
+                print("graph build",graph)
             except Exception as e:
                 print(f"Graph build failed for '{name}': {e}")
 
@@ -76,9 +83,12 @@ class IngestionPipeline:
             text = f"{row['heading']}\n{row['text']}" if row["heading"] else row["text"]
             async with sem:
                 return row, await self.extractor.extract_raw(text)
+        print("-"*50)
 
         results = await asyncio.gather(*(run(r) for r in rows))
 
+        print(results)
+        print("-"*50)
         # Phase 2: one chunk at a time, so dedup always sees what earlier chunks added
         n_entities = n_relations = 0
         for row, parsed in results:

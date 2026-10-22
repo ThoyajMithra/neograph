@@ -31,6 +31,25 @@ class Chat:
             )
             return await cur.fetchall()
 
+    async def get_chunks_by_ids(self, chunk_ids: list[str], query_embedding: list[float],
+                                limit: int = 12) -> list[dict]:
+        """Chunks with the given ids (from graph traversal), ranked by similarity to the query."""
+        if not chunk_ids:
+            return []
+        vec = str(query_embedding)
+        async with self.pool.connection() as conn:
+            cur = await conn.execute(
+                """SELECT c.id, c.document_id, d.name AS document_name,
+                          c.idx, c.heading, c.text,
+                          1 - (c.embedding <=> %s::vector) AS score
+                   FROM chunks c
+                   JOIN documents d ON d.id = c.document_id
+                   WHERE c.id = ANY(%s::uuid[]) AND c.embedding IS NOT NULL
+                   ORDER BY c.embedding <=> %s::vector
+                   LIMIT %s""",
+                (vec, chunk_ids, vec, limit),
+            )
+            return await cur.fetchall()
 
     async def list_turns(self, limit: int = 50) -> list[dict]:
         async with self.pool.connection() as conn:
