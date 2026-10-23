@@ -6,12 +6,13 @@ load_dotenv()
 
 def get_async_openai_client() -> AsyncOpenAI:
     api_key = os.getenv("LLM_API_KEY")
+
     if not api_key:
         raise EnvironmentError("LLM_API_KEY not set.")
     
     return AsyncOpenAI(
         api_key=api_key,
-        base_url="https://api.deepseek.com"
+        base_url="https://api.groq.com/openai/v1"
     )
 
 def get_async_ollama_client() -> AsyncOpenAI:

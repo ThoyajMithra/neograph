@@ -19,7 +19,7 @@ from engine.models.node import Node
 from engine.models.edge import Edge
 from engine.extraction.prompts import EXTRACTION_PROMPT
 from engine.extraction.schemas import ExtractionResult
-from engine.client import get_openai,get_ollama
+from engine.client_async import get_async_openai_client,get_async_ollama_client
 
 
 class EntityExtractor:
@@ -41,7 +41,7 @@ class EntityExtractor:
         self.temperature = temperature
         self.max_retries = max_retries
         self.timeout = timeout
-        self.client = get_ollama() if self.use_local else get_openai()
+        self.client = get_async_ollama_client() if self.use_local else get_async_openai_client()
 
         self._node_embed_cache: dict[str, np.ndarray] = {}
 

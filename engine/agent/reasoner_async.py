@@ -58,7 +58,7 @@ class AsyncGraphReasoner:
         self.max_trace_chunks = max_trace_chunks
         self.max_depth = max_depth
         self.top_k = top_k
-        self.client = get_async_openai_client() if self.use_openai else get_async_ollama_client()
+        self.client = get_async_openai_client() #if self.use_openai else get_async_ollama_client()
 
     # ------------------------------------------------------------------
     # Shared helpers
@@ -72,6 +72,7 @@ class AsyncGraphReasoner:
             + f")\n{h['text']}"
             for i, h in enumerate(hits)
         )
+    
 
     @staticmethod
     def _format_history(history: list[dict]) -> str:
@@ -103,30 +104,55 @@ class AsyncGraphReasoner:
              "confidence": confidence, "steps": steps, "sources": []},
         ]
 
-    async def _stream_completion(self, messages: list[dict], temperature: float = 0.3):
-        """Yields token events, then one internal '_result' event with the totals."""
-        response = await self.client.chat.completions.create(
-            model=self.model_name,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=4096,
-            stream=True,
-            stream_options={"include_usage": True},
-        )
+        
+    async def _stream_completion(
+        self,
+        messages: list[dict],
+        temperature: float = 0.3,
+    ):
+        import traceback
+
+        print("Client:", type(self.client).__name__)
+        print("Base URL:", self.client.base_url)
+        print("Model:", self.model_name)
 
         answer_text = ""
         tokens_used = 0
-        async for chunk in response:
-            if chunk.usage:
-                tokens_used = chunk.usage.total_tokens
-            if not chunk.choices:            # the final usage chunk has no choices
-                continue
-            delta = chunk.choices[0].delta.content or ""
-            if delta:
-                answer_text += delta
-                yield {"type": "token", "token": delta}
 
-        yield {"type": "_result", "answer": answer_text, "tokens_used": tokens_used}
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=4096,
+                stream=True,
+                stream_options={"include_usage": True},
+            )
+
+            print("Stream opened successfully.")
+
+            async for chunk in response:
+                if chunk.usage:
+                    tokens_used = chunk.usage.total_tokens
+
+                if not chunk.choices:
+                    continue
+
+                delta = chunk.choices[0].delta.content or ""
+
+                if delta:
+                    answer_text += delta
+                    yield {"type": "token", "token": delta}
+
+            yield {
+                "type": "_result",
+                "answer": answer_text,
+                "tokens_used": tokens_used,
+            }
+
+        except Exception:
+            traceback.print_exc()
+            raise
 
     # ------------------------------------------------------------------
     # Routing
