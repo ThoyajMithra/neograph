@@ -86,9 +86,13 @@ class IngestionPipeline:
         print("-"*50)
 
         results = await asyncio.gather(*(run(r) for r in rows))
+        for row, parsed in results:
+            print(
+                f"Chunk {row['idx']}: "
+                f"entities={len(parsed.entities) if parsed else 'FAILED'}, "
+                f"relations={len(parsed.relations) if parsed else 'FAILED'}"
+            )
 
-        print(results)
-        print("-"*50)
         # Phase 2: one chunk at a time, so dedup always sees what earlier chunks added
         n_entities = n_relations = 0
         for row, parsed in results:
@@ -113,7 +117,8 @@ class IngestionPipeline:
                 try:
                     if await self.kg.create_edge(edge):
                         n_relations += 1
-                except ValueError:
+                except ValueError as e:
+                    print(f"Edge rejected: {edge!r} | Reason: {e}")
                     continue                                       # endpoint missing, skip
 
         return {"entities": n_entities, "relations": n_relations}
