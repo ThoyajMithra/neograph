@@ -1,9 +1,13 @@
 .env
 test.py
+BUG_REPORT.md
+uv.lock
+neograph-backup.dump
+installed-packages.txt
 
 .venv/
 __pycache__/
 node_modules/
 test/
 docs/
-uv.lock 
+

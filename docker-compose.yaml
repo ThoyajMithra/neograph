@@ -1,12 +1,16 @@
 services:
   db:
     image: pgvector/pgvector:pg16
+    container_name: pg
     environment:
-      POSTGRES_PASSWORD: qwert
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: newpass
       POSTGRES_DB: mydb
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+
 volumes:
   pgdata:
+    external: true

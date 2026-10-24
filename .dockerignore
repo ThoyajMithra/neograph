@@ -1,0 +1,15 @@
+.env
+
+.venv/
+__pycache__/
+*.py[cod]
+
+node_modules/
+test/
+docs/
+
+.git/
+installed-packages.txt
+neograph-backup.dump
+BUG_REPORT.md
+test.py
