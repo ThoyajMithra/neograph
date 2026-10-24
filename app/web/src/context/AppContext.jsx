@@ -12,6 +12,8 @@ export function AppProvider({ children }) {
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
 
+  
+
   useEffect(() => {
     fetchDocs().then(setDocs).catch((e) => setError(e.message));
   }, []);

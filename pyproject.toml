@@ -8,5 +8,6 @@ dependencies = [
     "uvicorn[standard]",
     "pgvector",
     "psycopg[binary,pool]",
-    "python-multipart"
+    "python-multipart",
+    "requests>=2.34.2",
 ]

@@ -72,15 +72,6 @@ html, body, #root { height: 100%; margin: 0; }
   background: #3a3a3a;
 }
 
-/* Graph */
-.graph {
-  flex: 1;
-  background-color: var(--bg);
-  background-image: radial-gradient(#444 1px, transparent 1px);
-  background-size: 24px 24px;
-  padding: 16px 24px;
-}
-.graph h2 { margin: 0; font-weight: 400; }
 
 /* Chat */
 .chat {
@@ -142,3 +133,71 @@ html, body, #root { height: 100%; margin: 0; }
 }
 .resizer:hover,
 .resizer:active { background: var(--text); }
+
+
+/* Graph */
+.graph {
+  display: "flex";
+  width: "100%";
+  height: "80vh";
+  /* minHeight: 500; */
+  position: "relative";
+  flex: 1;
+  background-color: var(--bg);
+  background-image: radial-gradient(#444 1px, transparent 1px);
+  background-size: 24px 24px;
+  padding: 16px 24px;
+}
+.graph h2 { margin: 0; font-weight: 400; }
+
+.graph-canvas {
+  flex: 1;
+  min-width: 0;
+  background: radial-gradient(#1c212c 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.graph-controls {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.graph-controls button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #2a303c;
+  border-radius: 6px;
+  background: #11151d;
+  color: #e6e9ef;
+  cursor: pointer;
+}
+
+.graph-panel {
+  width: 260px;
+  flex-shrink: 0;
+  padding: 16px;
+  overflow-y: auto;
+  border-left: 1px solid #2a303c;
+  background: #0f131b;
+}
+
+.graph-panel h3 {
+  margin-top: 0;
+}
+
+.graph-type {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.graph-msg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}

@@ -1,0 +1,11 @@
+#Simple Knowledge Graph Test
+
+Alice works for Acme Robotics.
+Acme Robotics is located in Chennai, India.
+Alice is a software engineer at Acme Robotics.
+Acme Robotics develops warehouse robots.
+The warehouse robots use computer vision.
+Computer vision enables the robots to identify objects.
+Alice leads the computer vision team.
+Bob reports to Alice.
+Bob develops object detection software for the warehouse robots.
