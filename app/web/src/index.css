@@ -201,3 +201,10 @@ html, body, #root { height: 100%; margin: 0; }
   place-items: center;
   pointer-events: none;
 }
+
+.graph-container {
+  width: 100%;
+  height: 100%;
+  transform: none;
+  zoom: 1;
+}

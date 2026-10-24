@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import cytoscape from "cytoscape";
+import fcose from "cytoscape-fcose";
+cytoscape.use(fcose);
 import { getOverview, getNode } from "../../api/graph";
 import { toElements } from "../../components/graph/elements";
 
@@ -26,32 +28,31 @@ const STYLE = [
       height: 64,
       color: "#e6edf7",
       "font-size": 24,
-      "font-weight": 600,
-      "font-family": "Arial, sans-serif",
+      "font-weight": 400,
+      "font-family": "",
       "text-valign": "bottom",
       "text-halign": "center",
-      // "text-margin-y": 9,
-      // "text-wrap": "wrap",
+      "text-margin-y": 9,
       "text-max-width": 120,
       "text-background-color": "#0b0e14",
-      "text-background-opacity": 0.3,
+      "text-background-opacity": 1,
       "text-background-padding": 3,
     },
   },
   {
-    selector: "edge",
-    style: {
-      width: 1.5,
-      "line-color": "#414b5d",
-      "line-opacity": 0.9,
-      "curve-style": "bezier",
-      label: "data(label)",
-      color: "#aab4c5",
-      "font-size": 18,
-      "text-rotation": "autorotate",
-      "text-background-color": "#0b0e14",
-      "text-background-opacity": 0.95,
-      // "text-background-padding": 3,
+  selector: "edge",
+  style: {
+    width: 3,
+    "line-color": "#f9f9f9",
+    "curve-style": "bezier",
+    label: "data(label)",
+    color: "#a5adbb",
+    "font-size": 16,
+    "text-rotation": "autorotate",
+    "text-background-color": "#0b0e14",
+    "text-background-opacity": 0.9,
+    "text-background-padding": 3,
+    "min-zoomed-font-size": 9,   // hide edge labels until you zoom in enough to read them
     },
   },
   {
@@ -65,19 +66,13 @@ const STYLE = [
 ];
 
 const LAYOUT = {
-  name: "cose",
-  animate: false,
-  fit: true,
-  padding: 30,
+  name: "fcose",
+  animate: true,
   randomize: true,
-  nodeDimensionsIncludeLabels: true,
-  nodeRepulsion: () => 50000,
+  nodeDimensionsIncludeLabels: false,
+  nodeRepulsion: () => 60000,
   idealEdgeLength: () => 140,
-  edgeElasticity: () => 80,
-  gravity: 0.5,
-  numIter: 1000,
-  componentSpacing: 100,
-  nodeOverlap: 30,
+  padding: 40,
 };
 
 export default function Graph() {
@@ -122,7 +117,7 @@ export default function Graph() {
           if (evt.target === cy) setSelected(null);
         });
         cy.resize();
-        cy.fit(undefined, 40);
+        cy.fit(undefined, 30);
 
         cyRef.current = cy;
         setStatus("ready");
