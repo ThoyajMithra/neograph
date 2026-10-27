@@ -12,7 +12,7 @@ from storage.postgres.chat import Chat
 from storage.postgres.graph import GraphStore
 from storage.postgres.vector import VectorStore
 from engine.ingestion.pipeline import IngestionPipeline
-from engine.embedding.encoder import LocalEncoder, EmbeddingEncoder
+from engine.embedding.encoder import LocalEncoder, EmbeddingEncoder,RemoteEncoder
 from engine.agent.reasoner_async import AsyncGraphReasoner
 from engine.graph.knowledge_graph import KnowledgeGraph
 from engine.extraction.extractor import EntityExtractor
@@ -40,7 +40,7 @@ def get_vector_store(pool=Depends(get_pool)) -> VectorStore:
 
 @lru_cache
 def get_encoder() -> EmbeddingEncoder:
-    return LocalEncoder(
+    return RemoteEncoder(
         model_name="baai/bge-small-en-v1.5",
         dimensionality=384,
     )

@@ -5,7 +5,7 @@ Local + Remote encoder
 import os
 import httpx
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 
 load_dotenv()
 
@@ -21,9 +21,9 @@ class EmbeddingEncoder:
 class LocalEncoder(EmbeddingEncoder):
     """CPU bound sentence transformers (local dev)"""
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5", dimensionality: int = 384):
-        from sentence_transformers import SentenceTransformer
+        # from sentence_transformers import SentenceTransformer
         self.model_name = model_name
-        self.model = SentenceTransformer(self.model_name)
+        # self.model = SentenceTransformer(self.model_name)
         self.dimensionality = dimensionality
 
     def encode(self, texts: str | list[str]) -> list[list[float]]:
