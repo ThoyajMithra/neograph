@@ -35,19 +35,15 @@ services:
         condition: service_healthy
     restart: unless-stopped
   frontend:
-    image: node:22-alpine
+    build:
+      context: ./app/web
+      dockerfile: Dockerfile
     container_name: frontend
-    working_dir: /app
-    volumes:
-      - ./app/web:/app
-      - /app/node_modules
     ports:
-      - "5173:5173"
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+      - "${FRONTEND_PORT:-8080}:80"
     depends_on:
       - backend
     restart: unless-stopped
-
 
 
 volumes:
