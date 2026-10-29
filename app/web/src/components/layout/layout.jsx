@@ -10,8 +10,8 @@ export default function AppLayout() {
   return (
     <div className="app">
       <div className="main">
-        <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
         <Graph />
+        <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       </div>
         <Chat pendingMention={pendingMention} setPendingMention={setPendingMention} />
     </div>
