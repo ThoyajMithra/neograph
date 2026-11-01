@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-from app.api.api.schemas.documents import ChunkOut, DocumentFull, UploadResponse
+from app.api.api.schemas.documents import ChunkOut, DocumentFull, UploadResponse,ChangeType
 from app.api.core.async_engine import AsyncEngine
 from app.api.dependencies import get_engine
 
@@ -21,6 +21,12 @@ async def list_docs(engine: AsyncEngine = Depends(get_engine)):
     """Just the file names, which is what the frontend expects."""
     return [d["name"] for d in await engine.list_documents()]
 
+@router.post("/changetype", response_model=ChangeType)
+async def upload(rid: int,engine: AsyncEngine = Depends(get_engine),):
+    engine.changerid(rid)
+    return {"rid" : rid}
+
+#--------------------------------mostly-unused-------------------------------------------------------------------------
 
 @router.get("/docs/{doc_id}", response_model=DocumentFull)
 async def read_doc(doc_id: UUID, engine: AsyncEngine = Depends(get_engine)):

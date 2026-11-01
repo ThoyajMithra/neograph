@@ -62,34 +62,16 @@ def get_extractor() -> EntityExtractor:
         encoder=get_encoder(),
     )
 
-
-_kg_lock = asyncio.Lock()
-
-
-async def get_knowledge_graph(
-    request: Request,
-    graph_store: GraphStore = Depends(get_graph_store),
-    vector_store: VectorStore = Depends(get_vector_store),
-    encoder: EmbeddingEncoder = Depends(get_encoder),
-) -> KnowledgeGraph:
-    """Built and loaded once on first use, then reused for every request."""
-    kg = getattr(request.app.state, "kg", None)
-    if kg is None:
-        async with _kg_lock:
-            kg = getattr(request.app.state, "kg", None)
-            if kg is None:
-                kg = KnowledgeGraph(
-                    store=graph_store,
-                    vector_store=vector_store,
-                    encoder=encoder,
-                    min_entry_score=float(os.getenv("MIN_ENTRY_SCORE", "0.30")),
-                    guided_traversal_min_score=float(os.getenv("GUIDED_MIN_SCORE", "0.20")),
-                    beam_width=int(os.getenv("BEAM_WIDTH", "3")),
-                )
-                await kg.load()
-                request.app.state.kg = kg
-    return kg
-
+@lru_cache
+def get_knowledge_graph(pool=Depends(get_pool)) -> KnowledgeGraph:
+    return KnowledgeGraph(
+        store=GraphStore(pool),
+        vector_store=VectorStore(pool),
+        encoder=get_encoder(),
+        min_entry_score=float(os.getenv("MIN_ENTRY_SCORE", "0.30")),
+        guided_traversal_min_score=float(os.getenv("GUIDED_MIN_SCORE", "0.20")),
+        beam_width=int(os.getenv("BEAM_WIDTH", "3")),
+    )
 
 
 def get_ingestion_pipeline(

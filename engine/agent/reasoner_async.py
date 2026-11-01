@@ -187,8 +187,11 @@ class AsyncGraphReasoner:
             print(f"Routing error: {e}")
             return True
 
-    def _use_graph(self) -> bool:
-        return self.kg is not None and bool(self.kg.nodes)
+    async def _use_graph(self) -> bool:
+        if self.kg is None:
+            return False
+        await self.kg.ensure_loaded()
+        return bool(self.kg.nodes)
 
     # ------------------------------------------------------------------
     # Path 1: graph pipeline
@@ -282,7 +285,7 @@ class AsyncGraphReasoner:
         # ---------- Step 4: build context + stream the answer ----------
         entity_context: list[str] = []
         for nid in trace.visited_nodes[:15]:          # cap to avoid token overflow
-            node = self.kg.get_node(nid)
+            node = await self.kg.get_node(nid)
             if node:
                 entity_context.append(
                     f"ENTITY: {node.name} [{node.node_type}]\n  Description: {node.description}"
@@ -290,8 +293,8 @@ class AsyncGraphReasoner:
 
         edge_context: list[str] = []
         for edge in trace.traversed_edges[:10]:
-            src = self.kg.get_node(edge.source_id)
-            tgt = self.kg.get_node(edge.target_id)
+            src = await self.kg.get_node(edge.source_id)
+            tgt = await self.kg.get_node(edge.target_id)
             if src and tgt:
                 edge_context.append(f"RELATION: {src.name} --[{edge.relation}]--> {tgt.name}")
 
@@ -514,12 +517,13 @@ Answer the question. Be concise.
         `top_k` / `max_depth` override the constructor defaults for this call.
         """
         history = history or []
+        print("-"*40)
         needs_retrieval = await self._route(question, history)
 
         if not needs_retrieval:
             async for event in self._answer_from_history(question, history):
                 yield event
-        elif self._use_graph():
+        elif await self._use_graph():
             async for event in self._process_with_graph(
                 question=question,
                 history=history,

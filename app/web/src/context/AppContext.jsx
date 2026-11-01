@@ -27,13 +27,13 @@ export function AppProvider({ children }) {
 
 
   const sendMessage = async (text) => {
-    setMessages((prev) => [...prev, {  "*":text }]);
+    const history = messages.map((m) => ({ role: m.role, content: m.text }));
+    setMessages((prev) => [...prev, { role: 'user', text }]);
     setLoading(true);
     setError(null);
     try {
-      const data = await askBackend(text, selectedDocs);
-      setMessages((prev) => [...prev, { 'x': data.answer }]);
-      console.log(messages)
+      const data = await askBackend(text, history);
+      setMessages((prev) => [...prev, { role: 'assistant', text: data.answer }]);
     } catch (e) {
       setError(e.message);
     } finally {

@@ -34,3 +34,6 @@ class UploadResult(BaseModel):
 
 class UploadResponse(BaseModel):
     files: list[UploadResult]
+
+class ChangeType(BaseModel):
+    rid : int 

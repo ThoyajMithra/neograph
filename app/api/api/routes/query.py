@@ -5,12 +5,8 @@ from app.api.core.async_engine import AsyncEngine
 from app.api.dependencies import get_engine,get_chat_store
 from storage.postgres.chat import Chat
 
-
+get_engine
 router = APIRouter(prefix="/api", tags=["query"])
-
-# @router.post("/query")
-# async def query():
-#     raise HTTPException(501, "Query is not built yet")
 
 @router.post("/query")
 async def query_sync(
@@ -52,7 +48,7 @@ async def query_sync(
     if not answer:
         raise HTTPException(status_code=404, detail="No answer generated")
 
-    await chat_store.save_turn(req.question, answer, sources, confidence, latency_ms)
+    # await chat_store.save_turn(req.question, answer, sources, confidence, latency_ms)
     
     return {
         "answer": answer,

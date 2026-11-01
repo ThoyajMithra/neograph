@@ -17,7 +17,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from engine.embedding.encoder import EmbeddingEncoder
 from engine.models.node import Node
 from engine.models.edge import Edge
-from engine.extraction.prompts import EXTRACTION_PROMPT
+from engine.extraction.prompts import EXTRACTION_PROMPTS,EXTRACTION_FORMAT
 from engine.extraction.schemas import ExtractionResult
 from engine.client_async import get_async_openai_client,get_async_ollama_client
 
@@ -26,7 +26,7 @@ class EntityExtractor:
     def __init__(
         self,
         # client,                                   # AsyncOpenAI
-        model_name: str = "deepseek-chat",
+        model_name: str = "qwen/qwen3.8-27b",
         use_local: bool = False,
         encoder: EmbeddingEncoder | None = None,
         dedup_threshold: float = 0.85,
@@ -45,6 +45,8 @@ class EntityExtractor:
 
         self._node_embed_cache: dict[str, np.ndarray] = {}
 
+        self.rid=0
+
     # ------------------------------------------------------------------
     # Phase 1: LLM call (async, safe to run several at once)
     # ------------------------------------------------------------------
@@ -59,7 +61,9 @@ class EntityExtractor:
             return None
 
     async def _call_llm_with_retry(self, chunk_text: str) -> dict:
-        prompt = EXTRACTION_PROMPT.replace("{chunk_text}", chunk_text.strip())
+        if(self.rid>=len(EXTRACTION_PROMPTS)):
+            self.rid=0
+        prompt = EXTRACTION_PROMPTS[self.rid]+EXTRACTION_FORMAT.replace("{chunk_text}", chunk_text.strip())
 
         messages = [
             {"role": "system", "content": "You are a precise data extraction system. Always respond with raw JSON matching the expected format. CRUCIAL: Every entity must include the 'aliases' list field, even if it is empty []."},

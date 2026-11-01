@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Sidebar from '../sidebar/sidebar.jsx';
 import Graph from '../graph/graph.jsx';
 import Chat from '../chat/chat.jsx';
+import Dropdown from '../dropdown/dropdown.jsx'
 
 export default function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -10,7 +11,10 @@ export default function AppLayout() {
   return (
     <div className="app">
       <div className="main">
-        <Graph />
+        <div className="graph-wrap">
+          <Graph />
+          <Dropdown />
+        </div>
         <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       </div>
         <Chat pendingMention={pendingMention} setPendingMention={setPendingMention} />

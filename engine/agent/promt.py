@@ -1,5 +1,5 @@
 
-REASONER_SYSTEM_PROMPT = """You are GraphSleuth Investigator — an analytical agent that answers questions by examining trace from a knowledge graph.
+REASONER_SYSTEM_PROMPT = """You are NeoGraph Investigator — an analytical agent that answers questions by examining trace from a knowledge graph.
 
 You have access to:
 1. A knowledge graph of entities (people, organizations, events, etc.) and their relationships

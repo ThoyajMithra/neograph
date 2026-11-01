@@ -1,11 +1,11 @@
-export async function askBackend(question, docs) {
+export async function askBackend(question, history) {
   const res = await fetch('/api/query', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question, docs }),
+    body: JSON.stringify({ question, history }),
   });
   if (!res.ok) throw new Error(`Server error ${res.status}`);
-  return res.json(); // { answer: "..." }
+  return res.json();
 }
 
 export async function fetchDocs() {

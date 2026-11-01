@@ -28,6 +28,14 @@ class IngestionPipeline:
         self.extractor = extractor
         self.concurrency = concurrency or int(os.getenv("EXTRACT_CONCURRENCY", "4"))
 
+        self.rid=0
+
+        
+
+    def changerid(self, rid: int):
+        self.rid = rid
+        self.extractor.rid = rid
+
     async def ingest_file(self, filename: str, raw: bytes) -> dict:
         name = os.path.basename(filename or "")
         suffix = os.path.splitext(name)[1].lower()
@@ -53,9 +61,9 @@ class IngestionPipeline:
 
         doc = await self.store.save_document_with_chunks(name, content, checksum, chunks, embeddings)
 
-        # NEW: graph step. The document is already saved, so a failure here loses nothing.
+        # Graph step. The document is already saved, so a failure here loses nothing.
         graph = {"entities": 0, "relations": 0}
-        if self.kg is None or self.extractor is  None:
+        if self.kg is None or self.extractor is None:
             print("skipped graph making")
             if self.kg is None:
                 print("its kg")
@@ -65,15 +73,17 @@ class IngestionPipeline:
             try:
                 async with _graph_lock:
                     graph = await self._build_graph(doc["id"])
-                print("graph build",graph)
+                print("graph build", graph)
             except Exception as e:
                 print(f"Graph build failed for '{name}': {e}")
 
         return self._result(name, "saved", doc_id=doc["id"], chunks=doc["chunk_count"],
                             entities=graph["entities"], relations=graph["relations"])
 
-    # NEW
     async def _build_graph(self, doc_id) -> dict:
+        # Make sure existing nodes/embeddings are in memory before dedup looks at them
+        await self.kg.ensure_loaded()
+
         rows = await self.store.get_chunks(doc_id)      # id, idx, heading, text (in idx order)
 
         # Phase 1: LLM calls, a few at a time
@@ -82,16 +92,16 @@ class IngestionPipeline:
         async def run(row):
             text = f"{row['heading']}\n{row['text']}" if row["heading"] else row["text"]
             async with sem:
+                print("started Extract_raw")
                 return row, await self.extractor.extract_raw(text)
-        print("-"*50)
 
         results = await asyncio.gather(*(run(r) for r in rows))
-        for row, parsed in results:
-            print(
-                f"Chunk {row['idx']}: "
-                f"entities={len(parsed.entities) if parsed else 'FAILED'}, "
-                f"relations={len(parsed.relations) if parsed else 'FAILED'}"
-            )
+        # for row, parsed in results:
+        #     print(
+        #         f"Chunk {row['idx']}: "
+        #         f"entities={len(parsed.entities) if parsed else 'FAILED'}, "
+        #         f"relations={len(parsed.relations) if parsed else 'FAILED'}"
+        #     )
 
         # Phase 2: one chunk at a time, so dedup always sees what earlier chunks added
         n_entities = n_relations = 0
@@ -120,6 +130,7 @@ class IngestionPipeline:
                 except ValueError as e:
                     print(f"Edge rejected: {edge!r} | Reason: {e}")
                     continue                                       # endpoint missing, skip
+        
 
         return {"entities": n_entities, "relations": n_relations}
 

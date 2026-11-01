@@ -16,11 +16,6 @@ from engine.models.document import ReasoningTrace
 from engine.graph.traversal import TraversalEngine
 
 
-def _iso(v) -> str:
-    """DB returns datetime objects; the models expect ISO strings."""
-    return v.isoformat() if hasattr(v, "isoformat") else str(v)
-
-
 class KnowledgeGraph:
 
     def __init__(
@@ -50,9 +45,20 @@ class KnowledgeGraph:
         self.in_edges: dict[str, list[Edge]] = defaultdict(list)
         self._embedding_cache: dict[str, list[float]] = {}
 
+        self._loaded = False
+        self._load_lock = asyncio.Lock()
+
     # ------------------------------------------------------------------
     # Loading
     # ------------------------------------------------------------------
+
+    async def ensure_loaded(self) -> None:
+        """Load from Postgres once, on first use."""
+        if self._loaded:
+            return
+        async with self._load_lock:
+            if not self._loaded:
+                await self.load()
 
     async def load(self) -> None:
         """(Re)load nodes, edges and node embeddings from Postgres."""
@@ -60,15 +66,12 @@ class KnowledgeGraph:
         edge_rows = await self.store.load_edges()
         embeddings = await self.vector_store.load_node_embeddings()
 
-        nodes = {
-            r["id"]: Node.from_dict({**r, "created_at": _iso(r["created_at"])})
-            for r in node_rows
-        }
+        nodes = {r["id"]: Node.from_dict(r) for r in node_rows}
 
         out_edges: dict[str, list[Edge]] = defaultdict(list)
         in_edges: dict[str, list[Edge]] = defaultdict(list)
         for r in edge_rows:
-            e = Edge.from_dict({**r, "created_at": _iso(r["created_at"])})
+            e = Edge.from_dict(r)
             out_edges[e.source_id].append(e)
             in_edges[e.target_id].append(e)
 
@@ -77,46 +80,55 @@ class KnowledgeGraph:
         self.out_edges = out_edges
         self.in_edges = in_edges
         self._embedding_cache = embeddings
+        self._loaded = True
 
     # ------------------------------------------------------------------
     # Node operations
     # ------------------------------------------------------------------
 
     async def add_node(self, node: Node) -> str:
+        await self.ensure_loaded()
+        # Encode first so a failure doesn't leave a node without an embedding
+        emb = await asyncio.to_thread(
+            self.encoder.encode_single, f"{node.name} {node.description}".strip()
+        )
         await self.store.save_node(
             node.id, node.name, node.node_type,
             node.aliases, node.description, node.source_chunk_ids,
-        )
-        emb = await asyncio.to_thread(
-            self.encoder.encode_single, f"{node.name} {node.description}".strip()
         )
         await self.vector_store.upsert_node_embedding(node.id, emb)
         self.nodes[node.id] = node
         self._embedding_cache[node.id] = emb
         return node.id
 
-    def get_node(self, node_id: str) -> Node | None:
+    async def get_node(self, node_id: str) -> Node | None:
+        await self.ensure_loaded()
         return self.nodes.get(node_id)
 
     async def update_node_chunks(self, node_id: str, new_chunk_id: str) -> bool:
         """Add a new source chunk to an existing node (for dedup merges)."""
+        await self.ensure_loaded()
         node = self.nodes.get(node_id)
         if node is None:
             return False
         if new_chunk_id not in node.source_chunk_ids:
-            node.source_chunk_ids.append(new_chunk_id)
+            new_ids = node.source_chunk_ids + [new_chunk_id]
+            # Save first, then update memory, so memory never gets ahead of the DB
             await self.store.save_node(
                 node.id, node.name, node.node_type,
-                node.aliases, node.description, node.source_chunk_ids,
+                node.aliases, node.description, new_ids,
             )
+            node.source_chunk_ids = new_ids
         return True
 
-    def get_nodes_by_type(self, node_type: str) -> list[Node]:
+    async def get_nodes_by_type(self, node_type: str) -> list[Node]:
+        await self.ensure_loaded()
         nt = node_type.upper()
         return [n for n in self.nodes.values() if n.node_type.upper() == nt]
 
     async def delete_node(self, node_id: str) -> None:
         """Remove a node and all its edges (edges cascade in the DB)."""
+        await self.ensure_loaded()
         if node_id not in self.nodes:
             return
         await self.store.delete_node(node_id)
@@ -136,6 +148,7 @@ class KnowledgeGraph:
 
     async def create_edge(self, edge: Edge) -> bool:
         """Add an edge. Returns True if new, False if duplicate."""
+        await self.ensure_loaded()
         if edge.source_id not in self.nodes or edge.target_id not in self.nodes:
             raise ValueError(
                 f"Edge references non-existent node: {edge.source_id} -> {edge.target_id}"
@@ -151,14 +164,17 @@ class KnowledgeGraph:
             self.in_edges[edge.target_id].append(edge)
         return inserted
 
-    def get_outgoing_edges(self, node_id: str) -> list[Edge]:
+    async def get_outgoing_edges(self, node_id: str) -> list[Edge]:
+        await self.ensure_loaded()
         return list(self.out_edges.get(node_id, []))
 
-    def get_incoming_edges(self, node_id: str) -> list[Edge]:
+    async def get_incoming_edges(self, node_id: str) -> list[Edge]:
+        await self.ensure_loaded()
         return list(self.in_edges.get(node_id, []))
 
-    def get_all_edges(self, node_id: str) -> list[Edge]:
+    async def get_all_edges(self, node_id: str) -> list[Edge]:
         """All edges touching node_id (both directions), deduplicated."""
+        await self.ensure_loaded()
         seen, result = set(), []
         for e in self.out_edges.get(node_id, []) + self.in_edges.get(node_id, []):
             if e.id not in seen:
@@ -166,10 +182,12 @@ class KnowledgeGraph:
                 result.append(e)
         return result
 
-    def get_edges_between(self, source_id: str, target_id: str) -> list[Edge]:
+    async def get_edges_between(self, source_id: str, target_id: str) -> list[Edge]:
+        await self.ensure_loaded()
         return [e for e in self.out_edges.get(source_id, []) if e.target_id == target_id]
 
-    def edge_exists(self, source_id: str, target_id: str, relation: str) -> bool:
+    async def edge_exists(self, source_id: str, target_id: str, relation: str) -> bool:
+        await self.ensure_loaded()
         return any(
             e.target_id == target_id and e.relation == relation
             for e in self.out_edges.get(source_id, [])
@@ -196,7 +214,8 @@ class KnowledgeGraph:
     # Traversal
     # ------------------------------------------------------------------
 
-    def bfs_traversal(self, start_node_id: str, **kwargs) -> tuple[set[str], list[Edge]]:
+    async def bfs_traversal(self, start_node_id: str, **kwargs) -> tuple[set[str], list[Edge]]:
+        await self.ensure_loaded()
         return self.traversal.bfs(
             start_node_id=start_node_id,
             nodes=self.nodes,
@@ -212,6 +231,7 @@ class KnowledgeGraph:
         max_depth: int = 2,
         direction: str = "both",
     ) -> tuple[set[str], list[Edge], list[float]]:
+        await self.ensure_loaded()
         query_emb = await asyncio.to_thread(self.encoder.encode_single, query)
         return self.traversal.guided(
             start_node_id=start_node_id,
@@ -238,6 +258,7 @@ class KnowledgeGraph:
         `guided_traversal_min_score` for just this call (used by the chat
         panel's confidence threshold).
         """
+        await self.ensure_loaded()
         query_emb = await asyncio.to_thread(self.encoder.encode_single, question)
         entry_nodes = await self.vector_store.search_nodes(query_emb, k=top_k)
 
@@ -273,8 +294,9 @@ class KnowledgeGraph:
     async def get_analytics(self, top_k: int = 10) -> dict:
         return await self.store.get_analytics(top_k)
 
-    def get_central_nodes(self, top_k: int = 10) -> list[tuple[str, int]]:
+    async def get_central_nodes(self, top_k: int = 10) -> list[tuple[str, int]]:
         """Nodes sorted by total degree (in-memory, used by the overview graph)."""
+        await self.ensure_loaded()
         degrees = [
             (nid, len(self.out_edges.get(nid, [])) + len(self.in_edges.get(nid, [])))
             for nid in list(self.nodes)
@@ -303,4 +325,3 @@ class KnowledgeGraph:
     async def get_past_traces(self, question: str) -> list[ReasoningTrace]:
         rows = await self.store.load_traces_for_question(question)
         return [ReasoningTrace.from_dict(r) for r in rows]
-    

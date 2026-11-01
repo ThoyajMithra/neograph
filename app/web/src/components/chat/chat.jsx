@@ -1,20 +1,21 @@
-import { useState,useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 
-
 export default function Chat() {
-  const { messages,selectedDocs,setMessages,sendMessage } = useApp();
+  const { messages, sendMessage, loading, error } = useApp();
   const [text, setText] = useState('');
   const [height, setHeight] = useState(200);
-  const fileRef = useRef(null);
-  
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
 
   const send = () => {
-    if (!text.trim()) return;
+    if (!text.trim() || loading) return;
     sendMessage(text);
     setText('');
   };
-
 
   const startResize = (e) => {
     e.preventDefault();
@@ -29,26 +30,26 @@ export default function Chat() {
 
   return (
     <footer className="chat" style={{ height }}>
-      <div
-        className="resizer"
-        onPointerDown={startResize}
-        onPointerMove={resize}
-      />
+      <div className="resizer" onPointerDown={startResize} onPointerMove={resize} />
       <div className="title">CHAT</div>
 
-      <div className='messages'>
+      <div className="messages">
         {messages.map((m, i) => (
-          <div key={i} className={`message ${m["x"] ? "ai" : "user"}`}>
-            {m["x"] ? "*" + m["x"] : "  " + m["*"]}
+          <div key={i} className={`message ${m.role === 'user' ? 'user' : 'ai'}`}>
+            {m.text}
           </div>
         ))}
+        {loading && <div className="message ai">Thinking...</div>}
+        {error && <div className="message ai">Error: {error}</div>}
+        <div ref={bottomRef} />
       </div>
-      
+
       <input
         value={text}
         placeholder="Question..."
+        disabled={loading}
         onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && send() }
+        onKeyDown={(e) => e.key === 'Enter' && send()}
       />
     </footer>
   );

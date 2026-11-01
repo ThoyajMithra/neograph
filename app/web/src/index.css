@@ -137,24 +137,20 @@ html, body, #root { height: 100%; margin: 0; }
 
 /* Graph */
 .graph {
-  display: "flex";
-  width: "100%";
-  height: "80vh";
-  /* minHeight: 500; */
-  position: "relative";
+  display: flex;
+  position: relative;
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   background-color: var(--bg);
-  background-image: radial-gradient(#444 1px, transparent 1px);
+  background-image: radial-gradient(#555 1px, transparent 1px);
   background-size: 24px 24px;
-  padding: 16px 24px;
 }
 .graph h2 { margin: 0; font-weight: 400; }
 
 .graph-canvas {
   flex: 1;
   min-width: 0;
-  background: radial-gradient(#1c212c 1px, transparent 1px);
-  background-size: 24px 24px;
 }
 
 .graph-controls {
@@ -207,4 +203,76 @@ html, body, #root { height: 100%; margin: 0; }
   height: 100%;
   transform: none;
   zoom: 1;
+}
+
+/*dropdown*/
+/* Graph wrapper (holds Graph + dropdown) */
+.graph-wrap {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+.graph-wrap > .graph {
+  flex: 1;
+  min-width: 0;
+}
+.dropdown {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+.dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.dropdown-btn:hover { background: #2a2d2e; }
+.dropdown-btn:focus-visible { outline: 1px solid var(--accent); }
+
+.dropdown-label { opacity: 0.6; }
+.dropdown-value { color: #fff; }
+
+.dropdown-caret {
+  font-size: 10px;
+  transition: transform 0.15s;
+}
+.dropdown-caret.open { transform: rotate(180deg); }
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.dropdown-menu button {
+  padding: 6px 12px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+}
+.dropdown-menu button:hover { background: #2a2d2e; }
+.dropdown-menu button.active {
+  color: #fff;
+  background: var(--accent);
 }
