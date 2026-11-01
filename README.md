@@ -6,12 +6,11 @@ You chat in the browser. The backend stores what it learns as nodes and edges in
 
 ![screenshot](app/web/public/image.png)
 
-
 ## Why neograph
 
 Plain RAG chops documents into chunks and hopes the right ones come back. That falls apart when the answer depends on how things *connect*: who worked with whom, which concept depends on which, what led to what.
 
-neograph builds the connections first. It reads your documents, extracts entities and the relationships between them, and stores everything as a graph. When you ask a question, the agent finds the relevant starting points and walks the graph to gather context, so answers come from connected evidence instead of isolated paragraphs.
+neograph builds the connections first. It reads your documents, extracts entities and the relationships between them, and stores everything as a graph in Postgres. When you ask a question, the agent finds the relevant starting points and walks the graph to gather context, so answers come from connected evidence instead of isolated paragraphs.
 
 ## What you get
 
@@ -22,7 +21,7 @@ Upload files and an LLM pipeline extracts entities and relations. Embedding-base
 A Graph RAG agent uses vector search to find entry nodes, traverses the graph from there, collects the supporting chunks, and streams the answer back.
 
 **Answers you can check**
-Every answer has a reasoning trace. The graph viewer highlights the exact nodes and edges the agent used, so you can see where an answer came from instead of taking it on faith.
+Every answer comes with a reasoning trace. The graph viewer highlights the nodes and edges the agent used, so you can see where an answer came from.
 
 **Conversation-aware**
 The agent uses chat history, so follow-up questions work the way you'd expect.
@@ -34,13 +33,13 @@ Chat, document sidebar and a live force-directed graph, side by side.
 
 ```mermaid
 flowchart LR
-    A[Documents] --> B[Chunk + embed]
-    B --> C[Extract entities<br/>and relations]
-    C --> D[(Knowledge graph<br/>Postgres + pgvector)]
-    Q[Question] --> E[Vector search<br/>entry nodes]
-    E --> F[Graph traversal]
+    A["Documents"] --> B["Chunk and embed"]
+    B --> C["Extract entities and relations"]
+    C --> D["Knowledge graph (Postgres + pgvector)"]
+    Q["Question"] --> E["Vector search for entry nodes"]
+    E --> F["Graph traversal"]
     D --> F
-    F --> G[Streamed answer<br/>+ reasoning trace]
+    F --> G["Streamed answer + reasoning trace"]
 ```
 
 Full component diagram: [diagram.md](diagram.md)
@@ -64,7 +63,7 @@ cp .env.example .env      # add your keys
 docker compose up
 ```
 
-Prefer running it locally?
+Or run it locally:
 
 ```bash
 # backend
@@ -96,7 +95,7 @@ storage/
   postgres/     document, chat, graph and vector stores
 ```
 
-The `engine/` package has no dependency on the web app, so the graph and agent logic can be used on their own.
+The `engine/` package doesn't depend on the web app, so the graph and agent logic can be used on its own.
 
 ## Roadmap
 
