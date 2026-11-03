@@ -192,6 +192,10 @@ export default function Graph() {
   return (
     <section className="graph">
       <div className="graph-canvas" ref={containerRef} />
+      <div className="graph-header">
+        <span>NEO GRAPH</span>
+        {/* <span className="graph-subtitle"> · Visual exploration</span> */}
+      </div>
 
       <div className="graph-controls">
         <button onClick={() => zoomBy(1.25)} title="Zoom in">+</button>

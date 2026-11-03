@@ -75,65 +75,121 @@ html, body, #root { height: 100%; margin: 0; }
 
 /* Chat */
 .chat {
-  height: 200px;
+  --term: currentColor;
   display: flex;
   flex-direction: column;
-  background: var(--panel);
-  border-top: 1px solid var(--border);
-}
-.messages { flex: 1; overflow-y: auto; padding: 0 12px; }
-.message { padding: 4 px 0; }
-
-.message.user::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: #159bd7;
-  border-radius: 50%;
-  margin-right: 8px;
-}
-
-.message.ai { padding: 4px 0; }
-
-.message.user { padding: 4px 0; }
-
-
-
-.chat input {
-  margin: 8px 12px 12px;
-  padding: 8px 10px;
-  background: #3c3c3c;
-  color: var(--text);
-  border: 1px solid transparent;
-  border-radius: 2px;
-  align-items: center;
-  outline: none;
-}
-.chat input:focus { border-color: var(--accent); }
-
-
-.chat {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  background: var(--panel);
-  border-top: 1px solid var(--border);
+  box-sizing: border-box;
+  min-height: 0;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 15px;
+  border-top: 1px solid rgba(128, 128, 128, 0.3);
 }
 
-
-.resizer {
+.chat .resizer {
   position: absolute;
   top: -3px;
   left: 0;
   right: 0;
   height: 6px;
-  cursor: row-resize;
-  z-index: 1;
+  cursor: ns-resize;
+  touch-action: none;
 }
-.resizer:hover,
-.resizer:active { background: var(--text); }
 
+.chat .title {
+  padding: 6px 14px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.chat .messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 14px 6px;
+  line-height: 1.6;
+}
+
+.chat .message {
+  padding: 2px 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.chat .message.user::before {
+  content: '> ';
+  color: var(--term);
+  opacity: 0.6;
+}
+.chat .message.user {
+  opacity: 0.7;
+}
+.chat .message.ai {
+  padding-left: 2ch;
+}
+
+.chat input {
+  padding: 8px 14px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-top: 1px solid rgba(128, 128, 128, 0.3);
+  outline: none;
+  caret-color: var(--term);
+  font-size: 15px;
+}
+.chat input::placeholder {
+  color: inherit;
+  opacity: 0.4;
+}
+
+/* space between turns, so each question starts a new block */
+.chat .message.user {
+  margin-top: 10px;
+}
+
+/* keep lines readable on wide screens */
+.chat .message {
+  max-width: 100ch;
+}
+
+/* the markdown renders its own paragraphs, so drop pre-wrap for AI */
+.chat .message.ai {
+  white-space: normal;
+}
+.chat .message.ai p {
+  margin: 0 0 0.6em;
+}
+.chat .message.ai ul,
+.chat .message.ai ol {
+  margin: 0 0 0.6em;
+  padding-left: 3ch;
+}
+.chat .message.ai strong {
+  font-weight: 600;
+}
+.chat .message.ai code {
+  padding: 1px 4px;
+  background: rgba(128, 128, 128, 0.15);
+  border-radius: 3px;
+}
+
+/* thinking with a blinking cursor */
+.chat .message.thinking::after {
+  content: '▋';
+  margin-left: 4px;
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.chat .message.error {
+  color: #e5534b;
+}
 
 /* Graph */
 .graph {
@@ -153,6 +209,18 @@ html, body, #root { height: 100%; margin: 0; }
   min-width: 0;
 }
 
+.graph-header {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  z-index: 10;
+
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #e6e9ef;
+  pointer-events: none;
+}
 .graph-controls {
   position: absolute;
   right: 16px;

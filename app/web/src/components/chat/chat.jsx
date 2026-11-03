@@ -1,3 +1,5 @@
+import ReactMarkdown from 'react-markdown';
+
 import { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 
@@ -36,7 +38,7 @@ export default function Chat() {
       <div className="messages">
         {messages.map((m, i) => (
           <div key={i} className={`message ${m.role === 'user' ? 'user' : 'ai'}`}>
-            {m.text}
+            {m.role === 'user' ? m.text : <ReactMarkdown>{m.text}</ReactMarkdown>}
           </div>
         ))}
         {loading && <div className="message ai">Thinking...</div>}
@@ -46,7 +48,7 @@ export default function Chat() {
 
       <input
         value={text}
-        placeholder="Question..."
+        placeholder="> question..."
         disabled={loading}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && send()}
